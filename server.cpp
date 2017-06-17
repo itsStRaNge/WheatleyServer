@@ -2,9 +2,12 @@
 #include <QTcpServer>
 #include <QTcpSocket>
 
-#define RED_PIN 24//24
-#define BLUE_PIN 23//23
-#define GREEN_PIN 18//18
+#include <QJsonObject>
+#include <QJsonDocument>
+
+#define RED_PIN 4//24
+#define BLUE_PIN 1//23
+#define GREEN_PIN 5//18
 
 #define ON_RASPBERRY 1
 #if (ON_RASPBERRY == 1)
@@ -26,10 +29,9 @@ server::server(QObject *parent) : QTcpServer(parent)
     //set valid commands
     commands<<"red"<<"green"<<"blue"<<"lightsOff"<<"fade"<<"socket";
     //setup pins
-   wiringPiSetupGpio();
- /*   if(wiringPiSetup() == -1){
+    if(wiringPiSetup() == -1){
 	qDebug()<<"ERROR cant setup wiringPi";
-    }    */
+    }
     list[0].bright=0;
     list[0].pin = RED_PIN;
     softPwmCreate(list[0].pin,0,100);
@@ -41,11 +43,11 @@ server::server(QObject *parent) : QTcpServer(parent)
     softPwmCreate(list[2].pin,0,100);
 
     //Socket setups
-    SOCKET_PIN = 17;//17 , 11
+    SOCKET_PIN = 0;//17 , 11
     piHiPri(20);
     this->mySwitch = RCSwitch();
     mySwitch.setPulseLength(300);
-    mySwitch.enableTransmit(SOCKET_PIN);
+    mySwitch.enableTransmit(0);
 
     //turn all sockets on
     for(int i = 0;i<NUM_OF_SOCKETS;i++){
@@ -64,8 +66,10 @@ void server::incomingConnection(qintptr socketDescriptor)
 
 void server::readyRead(){
     char inputBuffer[1000];
-    qint64 bytesRead = this->socket.read(inputBuffer, 1000);
+    QTcpSocket *socket = qobject_cast<QTcpSocket *>(sender());
+    qint64 bytesRead = socket->read(inputBuffer, 1000);
     QString jsonString(QByteArray(inputBuffer, bytesRead));
+    qDebug()<<"string: "<<jsonString;
     if(jsonString.at(0) != '{'){
         jsonString.prepend('{');
     }
@@ -75,44 +79,53 @@ void server::readyRead(){
     if(!doc.isEmpty() && !doc.isNull()){
         QJsonObject dataObject = doc.object();
         QString cmd = dataObject.take("command").toString();
+	int bright;
 
         switch(commands.indexOf(cmd)){
-            case 0:
+            case 0:{
                 //set red
                 bright = makeNumberValid(dataObject.take("value").toInt());
                 this->setColor(0,bright);
-                break;
-            case 1:
+                }
+		break;
+            case 1:{
                 //set green
                 bright = makeNumberValid(dataObject.take("value").toInt());
                 this->setColor(1,bright);
-                break;
-            case 2:
+                }
+		break;
+            case 2:{
                 //set blue
                 bright = makeNumberValid(dataObject.take("value").toInt());
                 this->setColor(2,bright);
-                break;
-            case 3:
+                }
+		break;
+            case 3:{
                 //lightsOff
                 setColor(0,0);
                 setColor(1,0);
                 setColor(2,0);
-                break;
-            case 4:
+                }
+		break;
+            case 4:{
                 //fade colors
                 qDebug()<<"fade is not implemented yet";
-                break;
-            case 5:
+                }
+		break;
+            case 5:{
                 //sockets
-                QString socketCmd = dataObject.take("id").toString();
-                if(socketCmd == "off"){
+                QString soCmd = dataObject.take("id").toString();
+                if(soCmd == "off"){
                     socketsOff();
                 }else{
-                    toggleSocket(socketCmd.toInt());
+                    toggleSocket(soCmd.toInt());
                 }
+		}
                 break;
-            default:
+            default:{
                 qWarning()<<"Unknown Color";
+		}
+		break;
         }
     }else{
         qWarning()<<"Error in reading Socket";
@@ -139,11 +152,11 @@ void server::toggleSocket(int socketNr){
 
     if(socketState[socketNr-1]){
         //turn socket off
-        mySwitch.switchOffBinary(nGroupNumber,socketNr);
+        mySwitch.switchOff(nGroupNumber,socketNr);
         socketState[socketNr-1]=false;
     }else{
         //turn socket on
-        mySwitch.switchOnBinary(nGroupNumber,socketNr);
+        mySwitch.switchOn(nGroupNumber,socketNr);
         socketState[socketNr-1]=true;
     }
     qDebug()<<nGroupNumber<<socketNr<<socketState[socketNr-1];
@@ -152,8 +165,8 @@ void server::toggleSocket(int socketNr){
 void server::socketsOff(){
     for(int i = 0;i<NUM_OF_SOCKETS;i++){
         char nGroupNumber[] = "11100";
-        mySwitch.switchOffBinary(nGroupNumber,socketNr+1);
-        socketState[socketNr]=false;
+        mySwitch.switchOff(nGroupNumber,i+1);
+        socketState[i]=false;
     }
     qDebug()<<"Turn off all Sockets";
 }
