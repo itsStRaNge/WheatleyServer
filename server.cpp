@@ -66,7 +66,7 @@ void server::incomingConnection(qintptr socketDescriptor)
 }
 
 void server::send_answer(QJsonObject packet){
-    QJsonDocument doc(data);
+    QJsonDocument doc(packet);
 
     QByteArray bytes  = doc.toJson();
     bytes = bytes.remove(bytes.length()-2,2);
