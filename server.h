@@ -8,7 +8,7 @@
 #define BLUE_PIN 23//23
 #define GREEN_PIN 18//18
 #define ON_RASPBERRY 1
-#define NUM_OF_SOCKETS 3
+#define NUM_OF_SOCKETS 5
 #if (ON_RASPBERRY == 1)
     #include <wiringPi.h>
     #include <softPwm.h>
@@ -30,6 +30,7 @@ public:
     qint8 getBlue();
     void toggleSocket(int);
     void socketsOff();
+    void socketsOn();
 protected:
     int port;
      void incomingConnection(qintptr socketDescriptor);

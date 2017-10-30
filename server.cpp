@@ -1,7 +1,7 @@
 #include "server.h"
 #include <QTcpServer>
 #include <QTcpSocket>
-
+#include <QThread>
 #include <QJsonObject>
 #include <QJsonDocument>
 
@@ -117,7 +117,9 @@ void server::readyRead(){
                 QString soCmd = dataObject.take("id").toString();
                 if(soCmd == "off"){
                     socketsOff();
-                }else{
+                }else if(soCmd == "on"){
+		    socketsOn();
+		}else{
                     toggleSocket(soCmd.toInt());
                 }
 		}
@@ -152,11 +154,17 @@ void server::toggleSocket(int socketNr){
 
     if(socketState[socketNr-1]){
         //turn socket off
-        mySwitch.switchOff(nGroupNumber,socketNr);
+	for(int i =0;i<2;i++){
+        	mySwitch.switchOff(nGroupNumber,socketNr);
+		QThread::msleep(20);
+	}
         socketState[socketNr-1]=false;
     }else{
         //turn socket on
-        mySwitch.switchOn(nGroupNumber,socketNr);
+        for(int i=0;i<2;i++){
+		mySwitch.switchOn(nGroupNumber,socketNr);
+		QThread::msleep(20);
+	}
         socketState[socketNr-1]=true;
     }
     qDebug()<<nGroupNumber<<socketNr<<socketState[socketNr-1];
@@ -165,12 +173,27 @@ void server::toggleSocket(int socketNr){
 void server::socketsOff(){
     for(int i = 0;i<NUM_OF_SOCKETS;i++){
         char nGroupNumber[] = "11100";
-        mySwitch.switchOff(nGroupNumber,i+1);
-        socketState[i]=false;
-    }
+	for(int j=0;j<2;j++){
+        	mySwitch.switchOff(nGroupNumber,i+1);
+	        QThread::msleep(20);
+	}
+        socketState[i]=false; 
+   }
     qDebug()<<"Turn off all Sockets";
 }
 
+void server::socketsOn(){
+    for(int i=0;i<NUM_OF_SOCKETS;i++){
+	 char nGroupNumber[] = "11100";
+        qDebug()<<"turn on: " <<i+1;
+	for(int j=0;j<2;j++){
+                mySwitch.switchOn(nGroupNumber,i+1);
+                QThread::msleep(20);
+        }
+        socketState[i]=true;
+    }
+    qDebug()<<"Turn on all Sockets";
+}
 void server::setColor(int pos,int newBright){
     qDebug()<<commands.at(0)<<"to"<<newBright;
     list[pos].bright = newBright;
