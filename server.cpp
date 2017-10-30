@@ -147,7 +147,7 @@ void server::readyRead(){
             answer["command"] = "socketStates";
 
             for(int i=0;i<NUM_OF_SOCKETS;i++){
-                answer[QString("%1").arg(i)] = socketState[i];
+                answer[QString("%1").arg(i)] = (int)socketState[i];
             }
             send_answer(answer);
             break;
