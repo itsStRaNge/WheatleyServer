@@ -58,14 +58,32 @@ server::server(QObject *parent) : QTcpServer(parent)
 
 void server::incomingConnection(qintptr socketDescriptor)
 {
-    QTcpSocket *clientConnection = new QTcpSocket;
-    clientConnection->setSocketDescriptor(socketDescriptor);
-    connect( clientConnection, SIGNAL( readyRead() ) , this, SLOT( readyRead() ), Qt::QueuedConnection );
-    connect( clientConnection, SIGNAL( disconnected() ), this, SLOT( disconnected() ) );
+    current_client = new QTcpSocket;
+    current_client->setSocketDescriptor(socketDescriptor);
+    connect( current_client, SIGNAL( readyRead() ) , this, SLOT( readyRead() ), Qt::QueuedConnection );
+    connect( current_client, SIGNAL( disconnected() ), this, SLOT( disconnected() ) );
+}
+
+void server::send_answer(QJsonObject packet){
+    QJsonDocument doc(data);
+
+    QByteArray bytes  = doc.toJson();
+    QString cmd(bytes);
+    cmd.remove(QChar('\n'));
+    qDebug()<<"sending: "<<cmd;
+    bytes = QByteArray::fromStdString(cmd.toStdString());
+
+    if(current_client->write(bytes) == -1){
+        qWarning()<<"cannot send answer to client";
+    }
+    if(!current_client->waitForBytesWritten(3000))
+        qWarning()<<"sending answer failed";
+
 }
 
 void server::readyRead(){
     char inputBuffer[1000];
+    QJsonObject answer;
     QTcpSocket *socket = qobject_cast<QTcpSocket *>(sender());
     qint64 bytesRead = socket->read(inputBuffer, 1000);
     QString jsonString(QByteArray(inputBuffer, bytesRead));
@@ -118,10 +136,14 @@ void server::readyRead(){
                 if(soCmd == "off"){
                     socketsOff();
                 }else if(soCmd == "on"){
-		    socketsOn();
-		}else{
-                    toggleSocket(soCmd.toInt());
+                    socketsOn();
+                }else{
+                    QString id_state = dataObject.take("state").toString();
+                    setSocket(soCmd.toInt(),id_state.toInt());
                 }
+
+                answer["command"]="success";
+                send_answer(answer);
 		}
                 break;
             default:{
@@ -149,51 +171,38 @@ int server::makeNumberValid(int bright){
     return bright;
 }
 
-void server::toggleSocket(int socketNr){
-   char nGroupNumber[] = "11100";
+void server::setSocket(int socket, int state){
+    char nGroupNumber[] = "11100";
 
-    if(socketState[socketNr-1]){
-        //turn socket off
-	for(int i =0;i<2;i++){
-        	mySwitch.switchOff(nGroupNumber,socketNr);
-		QThread::msleep(20);
-	}
-        socketState[socketNr-1]=false;
-    }else{
-        //turn socket on
-        for(int i=0;i<2;i++){
-		mySwitch.switchOn(nGroupNumber,socketNr);
-		QThread::msleep(20);
-	}
-        socketState[socketNr-1]=true;
+    for(int i=0;i<2;i++){
+        if(state){
+            //turn socket on
+            mySwitch.switchOn(nGroupNumber,socket);
+            socketState[socket-1]=true;
+        }else{
+            //turn socket off
+            mySwitch.switchOff(nGroupNumber,socket);
+            socketState[socket-1]=false;
+        }
+        QThread::msleep(20);
     }
-    qDebug()<<nGroupNumber<<socketNr<<socketState[socketNr-1];
+    qDebug()<<nGroupNumber<<socket<<socketState[socket-1];
 }
 
 void server::socketsOff(){
     for(int i = 0;i<NUM_OF_SOCKETS;i++){
-        char nGroupNumber[] = "11100";
-	for(int j=0;j<2;j++){
-        	mySwitch.switchOff(nGroupNumber,i+1);
-	        QThread::msleep(20);
-	}
-        socketState[i]=false; 
-   }
+        setSocket(i, SOCKET_OFF);
+    }
     qDebug()<<"Turn off all Sockets";
 }
 
 void server::socketsOn(){
-    for(int i=0;i<NUM_OF_SOCKETS;i++){
-	 char nGroupNumber[] = "11100";
-        qDebug()<<"turn on: " <<i+1;
-	for(int j=0;j<2;j++){
-                mySwitch.switchOn(nGroupNumber,i+1);
-                QThread::msleep(20);
-        }
-        socketState[i]=true;
+    for(int i = 0;i<NUM_OF_SOCKETS;i++){
+        setSocket(i, SOCKET_ON);
     }
     qDebug()<<"Turn on all Sockets";
 }
+
 void server::setColor(int pos,int newBright){
     qDebug()<<commands.at(0)<<"to"<<newBright;
     list[pos].bright = newBright;

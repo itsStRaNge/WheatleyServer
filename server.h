@@ -28,15 +28,21 @@ public:
     qint8 getRed();
     qint8 getGreen();
     qint8 getBlue();
-    void toggleSocket(int);
+    void setSocket(int, int);
     void socketsOff();
     void socketsOn();
+
+    enum{
+        SOCKET_OFF = 0,
+        SOCKET_ON = 1
+    };
 protected:
     int port;
      void incomingConnection(qintptr socketDescriptor);
 signals:
 
 private:
+     void send_answer(QJsonObject);
     qint8 red,blue,green;
     int makeNumberValid(int);
     int SOCKET_PIN;
@@ -44,6 +50,7 @@ private:
     RCSwitch mySwitch;
     colorPins list[3];
     bool socketState[NUM_OF_SOCKETS];
+    QTcpSocket  *current_client;
 
 public slots:
     void readyRead();
