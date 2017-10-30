@@ -137,7 +137,7 @@ void server::readyRead(){
                 }else if(soCmd == "on"){
                     socketsOn();
                 }else{
-                    QString id_state = dataObject.take("state").toString();
+                    QString id_state = dataObject.take("state").toInt();
                     setSocket(soCmd.toInt(),id_state.toInt());
                 }
 
