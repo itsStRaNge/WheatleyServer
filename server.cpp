@@ -81,19 +81,14 @@ void server::send_answer(QJsonObject packet){
 void server::readyRead(){
     char inputBuffer[1000];
     QJsonObject answer;
-    QString jsonString="";
     QTcpSocket *socket = qobject_cast<QTcpSocket *>(sender());
-
-    while(!QJsonDocument::fromJson(jsonString.toUtf8()).isNull()){
-        qint64 bytesRead = socket->read(inputBuffer, 1000);
-        jsonString += QString(QByteArray(inputBuffer, bytesRead));
-    }
-
+    qint64 bytesRead = socket->read(inputBuffer, 1000);
+    QString jsonString(QByteArray(inputBuffer, bytesRead));
+    qDebug()<<"string: "<<jsonString;
     if(jsonString.at(0) != '{'){
         jsonString.prepend('{');
     }
-    qDebug()<<"string: "<<jsonString;
-    QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8()).isNull();
+    QJsonDocument doc = QJsonDocument::fromJson(jsonString.toUtf8());
     qDebug()<<"received: "<<doc;
 
     if(!doc.isEmpty() && !doc.isNull()){
