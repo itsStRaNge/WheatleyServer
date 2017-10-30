@@ -75,7 +75,6 @@ void server::send_answer(QJsonObject packet){
     }
     if(!current_client->waitForBytesWritten(3000))
         qWarning()<<"sending answer failed";
-    current_client->disconnectFromHost();
 
 }
 
@@ -156,11 +155,12 @@ void server::readyRead(){
             default:{
                 qWarning()<<"Unknown Color";
 		}
-		break;
+            break;
         }
     }else{
         qWarning()<<"Error in reading Socket";
     }
+    current_client->disconnectFromHost();
 }
 
 void server::disconnected(){
