@@ -163,7 +163,8 @@ void server::readyRead(){
             break;
         }
 
-        current_client->disconnectFromHost();
+        if(current_client != NULL)
+            current_client->disconnectFromHost();
     }else{
         qWarning()<<"Error in reading Socket";
     }
