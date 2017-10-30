@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QJsonObject>
 #include <QJsonDocument>
+#include <QByteArray>
 
 #define RED_PIN 4//24
 #define BLUE_PIN 1//23
@@ -68,10 +69,8 @@ void server::send_answer(QJsonObject packet){
     QJsonDocument doc(data);
 
     QByteArray bytes  = doc.toJson();
-    QString cmd(bytes);
-    cmd.remove(QChar('\n'));
-    qDebug()<<"sending: "<<cmd;
-    bytes = QByteArray::fromStdString(cmd.toStdString());
+    bytes = bytes.remove(bytes.length()-2,2);
+    qDebug()<<"sending: "<<QString(bytes);
 
     if(current_client->write(bytes) == -1){
         qWarning()<<"cannot send answer to client";
