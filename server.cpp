@@ -28,7 +28,7 @@ server::server(QObject *parent) : QTcpServer(parent)
         qDebug()<< "Listening to IP:"<<this->serverAddress();
     }
     //set valid commands
-    commands<<"red"<<"green"<<"blue"<<"lightsOff"<<"fade"<<"socket";
+    commands<<"red"<<"green"<<"blue"<<"lightsOff"<<"fade"<<"socket"<<"socketStates";
     //setup pins
     if(wiringPiSetup() == -1){
 	qDebug()<<"ERROR cant setup wiringPi";
@@ -75,6 +75,7 @@ void server::send_answer(QJsonObject packet){
     }
     if(!current_client->waitForBytesWritten(3000))
         qWarning()<<"sending answer failed";
+    current_client->disconnectFromHost();
 
 }
 
@@ -142,6 +143,16 @@ void server::readyRead(){
                 send_answer(answer);
 		}
                 break;
+        case 6:{
+            //get socket states
+            answer["command"] = "socketStates";
+
+            for(int i=0;i<NUM_OF_SOCKETS;i++){
+                answer[QString("%1").arg(i)] = socketState[i];
+            }
+            send_answer(answer);
+            break;
+        }
             default:{
                 qWarning()<<"Unknown Color";
 		}
