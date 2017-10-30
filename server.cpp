@@ -70,8 +70,6 @@ void server::send_answer(QJsonObject packet){
 
     QByteArray bytes  = doc.toJson(QJsonDocument::Compact);
     qDebug()<<"sending: "<<QString(bytes);
-    qDebug()<<"bytes: "<<bytes;
-
     if(current_client->write(bytes) == -1){
         qWarning()<<"cannot send answer to client";
     }
@@ -137,7 +135,6 @@ void server::readyRead(){
                 }else if(soCmd == "on"){
                     socketsOn();
                 }else{
-                    QString id_state =;
                     setSocket(soCmd.toInt(), dataObject.take("state").toInt());
                 }
 
