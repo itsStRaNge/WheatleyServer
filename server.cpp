@@ -162,10 +162,11 @@ void server::readyRead(){
 		}
             break;
         }
+
+        current_client->disconnectFromHost();
     }else{
         qWarning()<<"Error in reading Socket";
     }
-    current_client->disconnectFromHost();
 }
 
 void server::disconnected(){
