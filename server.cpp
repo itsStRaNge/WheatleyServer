@@ -68,7 +68,7 @@ void server::incomingConnection(qintptr socketDescriptor)
 void server::send_answer(QJsonObject packet){
     QJsonDocument doc(packet);
 
-    QByteArray bytes  = doc.toJson();
+    QByteArray bytes  = doc.toJson(QJsonDocument::Compact);
     bytes = bytes.remove(bytes.length()-2,2);
     qDebug()<<"sending: "<<QString(bytes);
 
@@ -137,6 +137,7 @@ void server::readyRead(){
                 }else if(soCmd == "on"){
                     socketsOn();
                 }else{
+                    QString id_state =;
                     setSocket(soCmd.toInt(), dataObject.take("state").toInt());
                 }
 
