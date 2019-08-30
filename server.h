@@ -15,22 +15,12 @@
 #endif
 
 
-typedef struct {
-    int bright;
-    int pin;
-}colorPins;
 class server : public QTcpServer
 {
     Q_OBJECT
 public:
     explicit server(QObject *parent = 0);
-    void setColor(int,int);
-    qint8 getRed();
-    qint8 getGreen();
-    qint8 getBlue();
     void setSocket(int, int);
-    void socketsOff();
-    void socketsOn();
 
     enum{
         SOCKET_OFF = 0,
@@ -38,19 +28,15 @@ public:
     };
 protected:
     int port;
-     void incomingConnection(qintptr socketDescriptor);
+    void incomingConnection(qintptr socketDescriptor);
 signals:
 
 private:
-     void send_answer(QJsonObject);
     qint8 red,blue,green;
     int makeNumberValid(int);
     int SOCKET_PIN;
-    QStringList commands;
     RCSwitch mySwitch;
-    colorPins list[3];
-    bool socketState[NUM_OF_SOCKETS];
-    QTcpSocket  *current_client;
+    QTcpSocket *current_client;
 
 public slots:
     void readyRead();
