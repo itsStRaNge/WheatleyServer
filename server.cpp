@@ -38,7 +38,7 @@ server::server(QObject *parent) : QTcpServer(parent)
     this->mySwitch = RCSwitch();
     mySwitch.setPulseLength(300);
     mySwitch.enableTransmit(0);
-    mySwitch.setRepeatTransmit(20);
+    mySwitch.setRepeatTransmit(10);
 }
 
 void server::incomingConnection(qintptr socketDescriptor)
