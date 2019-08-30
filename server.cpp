@@ -67,8 +67,6 @@ void server::readyRead(){
         int socket = dataObject.take("Socket").toInt();
         int state = dataObject.take("State").toInt();
         setSocket(socket, state);
-        if(current_client != NULL)
-            current_client->disconnectFromHost();
     }else{
         qWarning()<<"Error in reading Socket";
     }
