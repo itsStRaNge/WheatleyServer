@@ -89,6 +89,6 @@ void server::setSocket(int socket, int state){
         //turn socket off
         mySwitch.switchOff(nGroupNumber,socket);
     }
-    qDebug()<<nGroupNumber<<socket<<socketState[socket-1];
+    qDebug()<<"Update Socket "<<socket<< " with state "<<state;
 }
 
