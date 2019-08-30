@@ -38,6 +38,7 @@ server::server(QObject *parent) : QTcpServer(parent)
     this->mySwitch = RCSwitch();
     mySwitch.setPulseLength(300);
     mySwitch.enableTransmit(0);
+    mySwitch.setRepeatTransmit(20);
 }
 
 void server::incomingConnection(qintptr socketDescriptor)
@@ -81,17 +82,12 @@ void server::disconnected(){
 void server::setSocket(int socket, int state){
     char nGroupNumber[] = "11100";
 
-    for(int i=0;i<2;i++){
-        if(state){
-            //turn socket on
-            mySwitch.switchOn(nGroupNumber,socket);
-            socketState[socket-1]=true;
-        }else{
-            //turn socket off
-            mySwitch.switchOff(nGroupNumber,socket);
-            socketState[socket-1]=false;
-        }
-        QThread::msleep(20);
+    if(state){
+        //turn socket on
+        mySwitch.switchOn(nGroupNumber,socket);
+    }else{
+        //turn socket off
+        mySwitch.switchOff(nGroupNumber,socket);
     }
     qDebug()<<nGroupNumber<<socket<<socketState[socket-1];
 }
